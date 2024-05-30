@@ -22,6 +22,16 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
+const StyledTableCell = styled(TableCell)(({ theme }) => ({
+  // [`&.${head}`]: {
+  backgroundColor: theme.palette.common.black,
+  color: theme.palette.common.white,
+  // },
+  // [`&.${body}`]: {
+  fontSize: 18,
+  // },
+}));
+
 export const YourWallet = ({ supportedTokens }: YourWalletProps) => {
   const { account } = useEthers();
 
