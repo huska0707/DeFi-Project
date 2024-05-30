@@ -1,6 +1,16 @@
 import { Token } from "../Main";
 import { Box } from "@material-ui/core";
+import { Token } from "../Main"
+import { Box, Table, TableBody, TableHead, TableRow, Paper, TableCell, TableContainer, makeStyles } from "@material-ui/core"
+import { WalletBalance } from "./WalletBalance"
+import { StakingBalance } from "./StakingBalance"
+import { StakeForm } from "./StakeForm"
+import { ConnectionRequiredMsg } from "../ConnectionRequiredMsg"
+import { useEthers } from "@usedapp/core"
 
+import { YieldRate, Unstake } from "../stakingContract"
+
+import { styled } from '@material-ui/core';
 import { useEthers } from "@usedapp/core";
 
 interface YourWalletProps {
@@ -45,5 +55,56 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
 export const YourWallet = ({ supportedTokens }: YourWalletProps) => {
   const { account } = useEthers();
 
-  return <Box sx={{ width: "115%" }}></Box>;
+  return (
+    <Box sx={{ width: "115%" }}>
+      {" "}
+      <TableContainer component={Paper}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <StyledTableCell align="center">Token</StyledTableCell>
+              <StyledTableCell align="center">Balance</StyledTableCell>
+              <StyledTableCell align="center">Staked</StyledTableCell>
+              <StyledTableCell align="center">APY</StyledTableCell>
+              <StyledTableCell align="center">Stake more!</StyledTableCell>
+              <StyledTableCell align="center">Unstake</StyledTableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {supportedTokens.map((token, index) => (
+              <StyledTableRow key={token.name}>
+                <TableCell vertical-align="middle" align="center">
+                  {
+                    <div>
+                      <p className={classes.tokenName}>{token.name}</p>
+                      <img
+                        className={classes.tokenImg}
+                        src={token.image}
+                        alt="token logo"
+                      />
+                    </div>
+                  }
+                </TableCell>
+                <TableCell align="center">
+                  {<WalletBalance token={token} />}
+                </TableCell>
+                <TableCell align="center">
+                  {<StakingBalance token={token} />}
+                </TableCell>
+                <TableCell align="center">
+                  {<YieldRate token={token} />}
+                </TableCell>
+                <TableCell align="center">
+                  {<StakeForm token={token} />}
+                </TableCell>
+                <TableCell align="center">
+                  {<Unstake token={token} />}
+                </TableCell>
+              </StyledTableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Box>
+  );
 };
