@@ -4,6 +4,10 @@ import { Box, makeStyles, Grid } from "@material-ui/core";
 import { ClaimToken } from "./ClaimToken";
 import { TokenToClaim } from "./TokenToClaim";
 
+interface StakingContractProps {
+  supportedTokens: Array<Token>;
+}
+
 export const StakingContract = ({ supportedTokens }: StakingContractProps) => {
   const classes = useStyles();
 
