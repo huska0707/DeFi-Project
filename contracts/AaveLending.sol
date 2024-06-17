@@ -3,6 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "../interfaces/ILendingProtocol.sol";
+import "../interfaces/ILendingPool.sol";
 import "@openzepplin/contracts/access/Ownable.sol";
 import "@openzepplin/contracts/token/ERC20/IERC20.sol";
 
