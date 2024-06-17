@@ -37,4 +37,17 @@ contract FlashBorrower is IERC3156FlashBorrower {
         if (action == Action.NORMAL) {} else if (action == Action.OTHER) {}
         return keccak256("ERC3156FlashBorrower.onFlashLoan");
     }
+
+    function flashBorrow(address token, uint256 amount) public {
+        bytes memory data = abi.encode(Action.NORMAL);
+        uint256 _allowance = IERC20(token).allowance(
+            address(this),
+            address(lender)
+        );
+
+        uint256 _fee = lender.flashFee(token, amount);
+        uint256 _repayment = amount + _fee;
+        IERC20(token).approve(address(lender), _allowance + _repayment);
+        lender.flashLoan(this, token, amount, data);
+    }
 }
