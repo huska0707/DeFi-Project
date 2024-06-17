@@ -3,6 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "../interfaces/ILendingProtocol.sol";
+import "../interfaces/ILendingPool.sol";
 import "@openzepplin/contracts/access/Ownable.sol";
 import "@openzepplin/contracts/token/ERC20/IERC20.sol";
 
@@ -49,5 +50,23 @@ contract AaveLending is ILendingProtocol, Ownable {
         )
 
         pool.deposit(_token, _amount, address(this), 0);
+    }
+
+    function withdraw(
+        address _token,
+        uint256 _amount,
+        address _to
+    ) external override(ILendingProtocol) onlyStakingContract returns(uint256) {
+        uint256 amountWithdrawn = pool.withdraw(_token, _amount, _to);
+
+        return amountWithdrawn;
+    }
+
+    function drainToken(address _token) external onlyOwner {
+        IERC20 token = IERC20(_token);
+        require(
+            token.transfer(msg.sender, token.balanceOf(address(this))),
+            "AaveLending: transfer() failed"
+        );
     }
 }
