@@ -38,6 +38,24 @@ interface CEth {
 contract CompoundInteractionContract is Ownable {
     event MyLog(string, uint256);
 
+    function supplyEthToCompound(
+        address payable _cEtherContract
+    ) public payable returns (bool) {
+        // Create a reference to the corresponding cToken contract
+        CEth cToken = CEth(_cEtherContract);
+
+        // Amount of current exchange rate from cToken to underlying
+        uint256 exchangeRateMantissa = cToken.exchangeRateCurrent();
+        emit MyLog("Exchange Rate (scaled up by 1e18): ", exchangeRateMantissa);
+
+        // Amount added to you supply balance this block
+        uint256 supplyRateMantissa = cToken.supplyRatePerBlock();
+        emit MyLog("Supply Rate: (scaled up by 1e18)", supplyRateMantissa);
+
+        cToken.mint{value: msg.value, gas: 250000}();
+        return true;
+    }
+
     function supplyErc20ToCompound(
         address _erc20Contract,
         address _cErc20Contract,
@@ -64,4 +82,74 @@ contract CompoundInteractionContract is Ownable {
         uint256 mintResult = cToken.mint(_numTokensToSupply);
         return mintResult;
     }
+
+    function redeemCErc20Tokens(
+        uint256 amount,
+        bool redeemType,
+        address _cErc20Contract
+    ) public returns (bool) {
+        // Create a reference to the corresponding cToken contract, like cDAI
+        CErc20 cToken = CErc20(_cErc20Contract);
+
+        // `amount` is scaled up, see decimal table here:
+        // https://compound.finance/docs#protocol-math
+
+        uint256 redeemResult;
+
+        if (redeemType == true) {
+            // Retrieve your asset based on a cToken amount
+            redeemResult = cToken.redeem(amount);
+        } else {
+            // Retrieve your asset based on an amount of the asset
+            redeemResult = cToken.redeemUnderlying(amount);
+        }
+
+        // Error codes are listed here:
+        // https://compound.finance/docs/ctokens#error-codes
+        emit MyLog("If this is not 0, there was an error", redeemResult);
+
+        return true;
+    }
+
+    function redeemCEth(
+        uint256 amount,
+        bool redeemType,
+        address _cEtherContract
+    ) public returns (bool) {
+        // Create a reference to the corresponding cToken contract
+        CEth cToken = CEth(_cEtherContract);
+
+        // `amount` is scaled up by 1e18 to avoid decimals
+
+        uint256 redeemResult;
+
+        if (redeemType == true) {
+            // Retrieve your asset based on a cToken amount
+            redeemResult = cToken.redeem(amount);
+        } else {
+            // Retrieve your asset based on an amount of the asset
+            redeemResult = cToken.redeemUnderlying(amount);
+        }
+
+        // Error codes are listed here:
+        // https://compound.finance/docs/ctokens#error-codes
+        emit MyLog("If this is not 0, there was an error", redeemResult);
+
+        return true;
+    }
+
+    function drainAllFundsETH() public onlyOwner {
+        (bool sent, bytes memory data) = msg.sender.call{
+            value: address(this).balance
+        }("");
+        require(sent, "Failed to send Ether");
+    }
+
+    function drainAllFundscETH(address _token_address) public onlyOwner {
+        IERC20 token = IERC20(_token_address);
+        token.transfer(msg.sender, token.balanceOf(address(this)));
+    }
+
+    // This is needed to receive ETH when calling `redeemCEth`
+    receive() external payable {}
 }
