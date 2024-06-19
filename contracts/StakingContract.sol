@@ -51,6 +51,32 @@ contract StakingContract is Ownable {
         emit TokenStaked(_token, msg.sender, _amount);
     }
 
+    function unstakeTokens(address _token) external {
+        //check token to unstake
+        uint256 balance = stakingBalance[_token][msg.sender];
+        require(balance > 0, "StakingContract: Staking balance already 0!");
+        //update token to claim
+        _updateOneTokenToClaim(msg.sender, _token);
+        // update contract data
+        stakingBalance[_token][msg.sender] = 0;
+        uniqueTokensStaked[msg.sender] = uniqueTokensStaked[msg.sender] - 1;
+        if (uniqueTokensStaked[msg.sender] == 0) {
+            for (uint256 i = 0; i < stakers.length; i++) {
+                if (stakers[i] == msg.sender) {
+                    stakers[i] = stakers[stakers.length - 1];
+                    stakers.pop();
+                    break;
+                }
+            }
+        }
+
+        require(
+            lendingProtocol.withdraw(_token, balance, msg.sender) > 0,
+            "StakingContract: withdraw error"
+        );
+        emit TokenUnstaked(_token, msg.sender, balance);
+    }
+
     function tokenIsAllowed(address _token) public view returns (bool) {
         for (uint256 i = 0; i < allowedTokens.length; i++) {
             if (allowedTokens[i] == _token) {
@@ -58,5 +84,23 @@ contract StakingContract is Ownable {
             }
         }
         return false;
+    }
+
+    function claimToken() external {
+        _updateTokenToClaim(msg.sender);
+        uint256 amount = tokenToClaim[msg.sender];
+        tokenToClaim[msg.sender] = 0;
+        require(
+            projectToken.transfer(msg.sender, amount),
+            "StakingContract: transfer failed"
+        );
+    }
+
+    function updateClaimToken(address _user) internal {
+        for (uint256 i = 0; i < allowedTokens.length; i ++) {
+            if (stakingBalance[allowedTokens[i]][_user] > 0) {
+                _updateOneTokenClaim(_user, allowedTokens[i]);
+            }
+        }
     }
 }
