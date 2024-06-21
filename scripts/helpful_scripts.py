@@ -25,6 +25,7 @@ ONE = Web3.toWei(1, "ether")
 INITIAL_PRICE_FEED_VALUE = 123_456_000_000
 DECIMALS = 18
 
+
 def get_account(index=None, id=None, user=None):
     if user == 1:
         accounts.add(config["wallets"]["from_key_user"])
@@ -38,17 +39,19 @@ def get_account(index=None, id=None, user=None):
     ):
         return accounts[0]
     if id:
-        return accounts.load[id]
+        return accounts.load(id)
     return accounts.add(config["wallets"]["from_key"])
+
 
 def get_weth(amount=0.1):
     print(f"#get_weth, amt={amount}")
     account = get_account()
-    weth = interface.IWETH(config["network"][network.show_active()]["weth_token"])
+    weth = interface.IWETH(config["networks"][network.show_active()]["weth_token"])
     deposit_tx = weth.deposit({"from": account, "value": amount * 10 ** 18})
     deposit_tx.wait(1)
     print(f"Received {amount} WETH")
     return deposit_tx
+
 
 def get_eth(amount=0.1):
     print(f"#get_eth, amt={amount}")
@@ -58,6 +61,7 @@ def get_eth(amount=0.1):
     withdraw_tx.wait(1)
     print(f"Received {amount} ETH")
     return withdraw_tx
+
 
 def approve_erc20(token_address, spender, amount, account):
     print(f"#approve_erc20, {amount} {token_address} for {spender}")
@@ -74,6 +78,7 @@ def get_asset_price(price_feed_address):
     print(f"The price is {converted_latest_price}")
     return float(converted_latest_price)
 
+
 contract_to_mock = {
     "dai_eth_price_feed": MockV3Aggregator,
     "weth_token": MockWETH,
@@ -88,22 +93,6 @@ contract_to_mock = {
     "LINK": MockERC20,
 }
 
-def deploy_mocks():
-    account = get_account()
-    print(f"### The active netwok is {network.show_active()}")
-    print("### Deploying Mocks...")
-    mock_price_feed = MockV3Aggregator.deploy(
-        DECIMALS, INITIAL_PRICE_FEED_VALUE, {"from": account}
-    )
-    print(f"MockV3Aggregator deployed to {mock_price_feed}")
-
-    mock_weth_token = MockWETH.deploy({"from": account})
-    print(f"MockWETH deployed to {mock_weth_token.address}")
-    mock_dai_token = MockDAI.deploy({"from": account})
-    print(f"MockDAI deployed to {mock_dai_token.address}")
-
-    mock_lending_pool = MockLendingPool.deploy({"from": account})
-    print(f"MockLendingPool deployed to {mock_lending_pool}")
 
 def get_contract(contract_name):
     """
@@ -136,12 +125,24 @@ def get_contract(contract_name):
             )
     return contract
 
-def get_asset_price(price_feed_address):
-    price_feed = interface.AggregatorV3Interface(price_feed_address)
-    latest_price = price_feed.latestRoundData()[1]
-    converted_latest_price = Web3.fromwei(latest_price, "ether")
-    print(f"The price is {converted_latest_price}")
-    return float(converted_latest_price)
+
+def deploy_mocks():
+    account = get_account()
+    print(f"### The active netwok is {network.show_active()}")
+    print("### Deploying Mocks...")
+    mock_price_feed = MockV3Aggregator.deploy(
+        DECIMALS, INITIAL_PRICE_FEED_VALUE, {"from": account}
+    )
+    print(f"MockV3Aggregator deployed to {mock_price_feed}")
+
+    mock_weth_token = MockWETH.deploy({"from": account})
+    print(f"MockWETH deployed to {mock_weth_token.address}")
+    mock_dai_token = MockDAI.deploy({"from": account})
+    print(f"MockDAI deployed to {mock_dai_token.address}")
+
+    mock_lending_pool = MockLendingPool.deploy({"from": account})
+    print(f"MockLendingPool deployed to {mock_lending_pool}")
+
 
 def get_verify_status():
     verify = (
@@ -177,7 +178,8 @@ def print_balance(users: list, tokens: list):
     for token in tokens:
         for user in users:
             print(f"{token}: {token.balanceOf(user)}")
-            
+
+
 def main():
     get_asset_price(get_contract("dai_eth_price_feed"))
     pass
