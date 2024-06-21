@@ -143,6 +143,41 @@ def get_asset_price(price_feed_address):
     print(f"The price is {converted_latest_price}")
     return float(converted_latest_price)
 
+def get_verify_status():
+    verify = (
+        config["networks"][network.show_active()]["verify"]
+        if config["networks"][network.show_active()].get("verify")
+        else False
+    )
+    return verify
+
+
+def distribute_token(token_address, n=3, amt=ONE):
+    account = get_account()
+    erc20 = interface.IERC20(token_address)
+    for i in range(n):
+        erc20.transfer(get_account(index=i + 1), amt, {"from": account})
+
+
+def cal_yield(amount, time, yield_rate):
+    """Calculate the yield from an amount of token staked during a given time at a given yield_rate"""
+    return math.floor(
+        amount
+        * INITIAL_PRICE_FEED_VALUE
+        / 10 ** DECIMALS
+        * time
+        * yield_rate
+        / 1000
+        / 86400
+    )
+
+
+def print_balance(users: list, tokens: list):
+    """Helper functions that prints the balance for a list of users for a list of tokens"""
+    for token in tokens:
+        for user in users:
+            print(f"{token}: {token.balanceOf(user)}")
+            
 def main():
     get_asset_price(get_contract("dai_eth_price_feed"))
     pass
