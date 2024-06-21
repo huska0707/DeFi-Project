@@ -41,6 +41,69 @@ def get_account(index=None, id=None, user=None):
         return accounts.load[id]
     return accounts.add(config["wallets"]["from_key"])
 
+
+contract_to_mock = {
+    "dai_eth_price_feed": MockV3Aggregator,
+    "weth_token": MockWETH,
+    "eth_usd_price_feed": MockV3Aggregator,
+    "dai_usd_price_feed": MockV3Aggregator,
+    "fau_token": MockDAI,
+    "lending_pool": MockLendingPool,
+    "compound_lending": MockLendingPool,
+    "aWETH": MockERC20,
+    "DAI": MockDAI,
+    "cDAI": MockERC20,
+    "LINK": MockERC20,
+}
+
+def deploy_mocks():
+    account = get_account()
+    print(f"### The active netwok is {network.show_active()}")
+    print("### Deploying Mocks...")
+    mock_price_feed = MockV3Aggregator.deploy(
+        DECIMALS, INITIAL_PRICE_FEED_VALUE, {"from": account}
+    )
+    print(f"MockV3Aggregator deployed to {mock_price_feed}")
+
+    mock_weth_token = MockWETH.deploy({"from": account})
+    print(f"MockWETH deployed to {mock_weth_token.address}")
+    mock_dai_token = MockDAI.deploy({"from": account})
+    print(f"MockDAI deployed to {mock_dai_token.address}")
+
+    mock_lending_pool = MockLendingPool.deploy({"from": account})
+    print(f"MockLendingPool deployed to {mock_lending_pool}")
+    
+def get_contract(contract_name):
+    """
+    This script will either:
+            - Get an address from the config
+            - Or deploy a mock to use for a network that doesn't have it
+        Args:
+            contract_name (string): This is the name that is refered to in the
+            brownie config and 'contract_to_mock' variable.
+        Returns:
+            brownie.network.contract.ProjectContract: The most recently deployed
+            Contract of the type specificed by the dictonary. This could be either
+            a mock or the 'real' contract on a live network.
+    """
+    contract_type = contract_to_mock[contract_name]
+    if network.show_active() in LOCAL_BLOCKCHAIN_ENVIRONMENTS:
+        if len(contract_type) <= 0:
+            deploy_mocks()
+        contract = contract_type[-1]
+
+    else:
+        try:
+            contract_address = config["networks"][network.show_active()][contract_name]
+            contract = Contract.from_abi(
+                contract_type._name, contract_address, contract_type.abi
+            )
+        except KeyError:
+            print(
+                f"{network.show_active()} address not found, perhaps you should add it to the config or deploy mocks?"
+            )
+    return contract
+
 def get_asset_price(price_feed_address):
     price_feed = interface.AggregatorV3Interface(price_feed_address)
     latest_price = price_feed.latestRoundData()[1]
