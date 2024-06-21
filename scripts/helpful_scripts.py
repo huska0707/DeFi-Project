@@ -41,6 +41,23 @@ def get_account(index=None, id=None, user=None):
         return accounts.load[id]
     return accounts.add(config["wallets"]["from_key"])
 
+def get_weth(amount=0.1):
+    print(f"#get_weth, amt={amount}")
+    account = get_account()
+    weth = interface.IWETH(config["network"][network.show_active()]["weth_token"])
+    deposit_tx = weth.deposit({"from": account, "value": amount * 10 ** 18})
+    deposit_tx.wait(1)
+    print(f"Received {amount} WETH")
+    return deposit_tx
+
+def get_eth(amount=0.1):
+    print(f"#get_eth, amt={amount}")
+    account = get_account()
+    weth = interface.IWETH(config["networks"][network.show_active()]["weth_token"])
+    withdraw_tx = weth.withdraw(amount * 10 ** 18, {"from": account})
+    withdraw_tx.wait(1)
+    print(f"Received {amount} ETH")
+    return withdraw_tx
 
 contract_to_mock = {
     "dai_eth_price_feed": MockV3Aggregator,
@@ -72,7 +89,7 @@ def deploy_mocks():
 
     mock_lending_pool = MockLendingPool.deploy({"from": account})
     print(f"MockLendingPool deployed to {mock_lending_pool}")
-    
+
 def get_contract(contract_name):
     """
     This script will either:
