@@ -59,6 +59,21 @@ def get_eth(amount=0.1):
     print(f"Received {amount} ETH")
     return withdraw_tx
 
+def approve_erc20(token_address, spender, amount, account):
+    print(f"#approve_erc20, {amount} {token_address} for {spender}")
+    erc20 = interface.IERC20(token_address)
+    tx = erc20.approve(spender, amount, {"from": account})
+    tx.wait(1)
+    print("Approved")
+
+
+def get_asset_price(price_feed_address):
+    price_feed = interface.AggregatorV3Interface(price_feed_address)
+    latest_price = price_feed.latestRoundData()[1]
+    converted_latest_price = Web3.fromWei(latest_price, "ether")
+    print(f"The price is {converted_latest_price}")
+    return float(converted_latest_price)
+
 contract_to_mock = {
     "dai_eth_price_feed": MockV3Aggregator,
     "weth_token": MockWETH,
