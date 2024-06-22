@@ -9,7 +9,6 @@ from brownie import (
     network,
 )
 
-
 def deploy_compound_lending_contract():
     if network.show_active() in LOCAL_BLOCKCHAIN_ENVIRONMENTS:
         compound_lending = get_contract("compound_lending")
