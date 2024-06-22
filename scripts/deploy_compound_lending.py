@@ -42,8 +42,6 @@ def withdraw_compound(compound_lending, token, amt, account):
         amt,
         account,
         {"from": account, "gas_limit": 1_000_000, "allow_revert": True},
-        # otherwise fails with out-of-gas
-        # 0x52210db57a34303cd099d2ecd9ca63c4a1507e7051f6a315a124babc76425c1b
     )
 
 
@@ -53,12 +51,8 @@ def drain_token_compound(compound_lending, token, account):
 
 def main():
     account = get_account()
-    compound_lending = deploy_compound_lending_contract()
     DAI = get_contract("DAI")
     cDAI = get_contract("cDAI")
     amt = TEN
     compound_lending = CompoundLending[-1]
-    approve_erc20(DAI, compound_lending, amt, account)
-    deposit_compound(compound_lending, DAI, amt, account)
-    withdraw_compound(compound_lending, DAI, amt, account)
     drain_token_compound(compound_lending, DAI, account)
