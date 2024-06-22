@@ -278,7 +278,7 @@ def test_unstake_tokens(amount_staked):
         staking_contract.address
     )  # 0 since its on aave
     initial_balance_staker_on_contract = staking_contract.stakingBalance(
-        weth_token.address
+        weth_token.address, account.address
     )
     initial_balance_staker = weth_token.balanceOf(account.address)
 
@@ -484,6 +484,39 @@ def test_get_user_total_value_with_different_tokens(amount_staked):
     assert user_value_pjtk == amount_staked * INITIAL_PRICE_FEED_VALUE / 10 ** DECIMALS
 
     assert total_value == user_value_weth + user_value_dai + user_value_pjtk
+
+
+## changeLendingProtocol
+
+
+def test_change_lending_protocol(amount_staked):
+    if network.show_active() not in LOCAL_BLOCKCHAIN_ENVIRONMENTS:
+        pytest.skip("Only for local testing!")
+    account = get_account()
+    (
+        staking_contract,
+        project_token,
+        weth_token,
+        lending_protocol,
+        tx,
+    ) = deploy_and_stake_weth(amount_staked)
+
+    assert staking_contract.lendingProtocol() == lending_protocol
+
+    lending_protocol_compound = deploy_compound_lending_contract()
+    staking_contract.changeLendingProtocol(lending_protocol_compound)
+
+    assert staking_contract.lendingProtocol() == lending_protocol_compound
+
+    lending_protocol_aave = deploy_aave_lending_contract()
+    staking_contract.changeLendingProtocol(lending_protocol_aave)
+
+    assert staking_contract.lendingProtocol() == lending_protocol_aave
+
+    with reverts("Ownable: caller is not the owner"):
+        staking_contract.changeLendingProtocol(
+            lending_protocol_aave, {"from": get_account(1)}
+        )
 
 
 def test_change_lending_protocol_while_funds_are_deposited_there(amount_staked):

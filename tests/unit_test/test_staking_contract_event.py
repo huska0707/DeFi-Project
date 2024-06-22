@@ -157,3 +157,28 @@ def test_event_change_lending_protocol(amount_staked):
         tx.events["LendingProtocolChanged"]["oldProtocol"] == lending_protocol_compound
     )
 
+
+def test_event_YieldRateChange():
+
+    if network.show_active() not in LOCAL_BLOCKCHAIN_ENVIRONMENTS:
+        pytest.skip("Only for local testing!")
+    account = get_account()
+    (
+        staking_contract,
+        project_token,
+        weth_token,
+        lending_protocol,
+    ) = deploy_staking_contract_and_project_token()
+    pricefeed_of_token = get_contract("dai_usd_price_feed")
+    tx = staking_contract.addAllowedTokens(
+        project_token.address, pricefeed_of_token, 0, {"from": account}
+    )
+    tx.wait(1)
+    assert tx.events["YieldRateChange"]["token"] == project_token.address
+    assert tx.events["YieldRateChange"]["newYield"] == 0
+
+    tx2 = staking_contract.updateYieldRate(project_token, 42)
+
+    tx2.wait(1)
+    assert tx2.events["YieldRateChange"]["token"] == project_token.address
+    assert tx2.events["YieldRateChange"]["newYield"] == 42
