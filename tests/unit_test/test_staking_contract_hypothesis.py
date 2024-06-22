@@ -6,7 +6,8 @@ from scripts.deploy_staking_contract import (
     stake_and_approve_token,
 )
 
-
+# from scripts.deploy_aave_lending_contract import deploy_aave_lending_contract
+# from scripts.deploy_compound_lending import deploy_compound_lending_contract
 from scripts.helpful_scripts import (
     LOCAL_BLOCKCHAIN_ENVIRONMENTS,
     INITIAL_PRICE_FEED_VALUE,
@@ -21,7 +22,7 @@ from scripts.helpful_scripts import (
     print_balance,
 )
 import pytest
-from brownie.test import strategy
+from brownie.test import given, strategy
 from hypothesis import settings
 
 # import time
@@ -112,6 +113,7 @@ def test_updateYieldRate(_weth_new_yield, _dai_new_yield):
     distribute_token(weth_token, 3, amt=ONE)
     distribute_token(dai_token, 3, amt=5 * CENT)
     distribute_token(project_token, 3, amt=10 * ONE)
+    # print_balance([user1, user2, user3], [weth_token, project_token, dai_token])
 
     weth_staked = POINT_ONE
     pjtk_staked = ONE
@@ -123,13 +125,17 @@ def test_updateYieldRate(_weth_new_yield, _dai_new_yield):
     # Initial
     assert init_tokenToClaim_1 == init_tokenToClaim_2 == init_tokenToClaim_3 == 0
 
-
+    # t=0
+    # User1,2,3 STAKE 0.1 WETH
     stake_tx = stake_and_approve_token(staking_contract, weth_token, weth_staked, user1)
     stake_weth_1_first_timestamp = stake_tx.timestamp
     stake_tx = stake_and_approve_token(staking_contract, weth_token, weth_staked, user2)
     stake_weth_2_timestamp = stake_tx.timestamp
     stake_tx = stake_and_approve_token(staking_contract, weth_token, weth_staked, user3)
     stake_weth_3_timestamp = stake_tx.timestamp
+    # User1 STAKE 500 DAI
+    stake_tx = stake_and_approve_token(staking_contract, dai_token, dai_staked, user1)
+    stake_dai_1_timestamp = stake_tx.timestamp
     # User2 STAKE 8.12 PJTK
     stake_tx = stake_and_approve_token(
         staking_contract, project_token, 8.12 * ONE, user2
@@ -140,11 +146,14 @@ def test_updateYieldRate(_weth_new_yield, _dai_new_yield):
     chain.sleep(10000)
     unstake_tx = staking_contract.unstakeTokens(weth_token, {"from": user1})
     unstake_weth_1_first_timestamp = unstake_tx.timestamp
+    # User1 reSTAKE 0.1 WETH for 7 sec
     stake_tx = stake_and_approve_token(staking_contract, weth_token, weth_staked, user1)
     stake_weth_1_second_timestamp = stake_tx.timestamp
+    # User3 STAKE additional 0.1 for 7 sec
     stake_tx = stake_and_approve_token(staking_contract, weth_token, weth_staked, user3)
     stake_weth_3_second_timestamp = stake_tx.timestamp
 
+    # WETH YieldRate change to _weth_new_yield
     chain.sleep(10000)
     update_weth_tx = staking_contract.updateYieldRate(
         weth_token, _weth_new_yield, {"from": account}
@@ -187,7 +196,7 @@ def test_updateYieldRate(_weth_new_yield, _dai_new_yield):
     staking_time_weth_1_third = (
         unstake_weth_1_second_timestamp - update_weth_tx_timestamp
     )
-    staking_time_dai_1_first = update_dai_tx_timestamp
+    staking_time_dai_1_first = update_dai_tx_timestamp - stake_dai_1_timestamp
     staking_time_dai_1_second = unstake_dai_1_timestamp - update_dai_tx_timestamp
 
     staking_time_weth_2_first = update_weth_tx_timestamp - stake_weth_2_timestamp
@@ -233,6 +242,7 @@ def test_updateYieldRate(_weth_new_yield, _dai_new_yield):
         222 * ONE, staking_time_dai_3, _dai_new_yield
     )
 
+    # User 1,2,3 CLAIM their token
     init_pjtk_balance = project_token.balanceOf(user1)
     pjtk_to_claim = staking_contract.tokenToClaim(user1)
     staking_contract.claimToken({"from": user1})
