@@ -34,6 +34,8 @@ interface ILendingPoolAddressesProvider {
 
     function getLendingPool() external view returns (address);
 
+    function setLendingPoolImpl(address pool) external;
+
     function getLendingPoolConfigurator() external view returns (address);
 
     function setLendingPoolConfiguratorImpl(address configurator) external;
@@ -45,6 +47,8 @@ interface ILendingPoolAddressesProvider {
     function getPoolAdmin() external view returns (address);
 
     function setPoolAdmin(address admin) external;
+
+    function getEmergencyAdmin() external view returns (address);
 
     function setEmergencyAdmin(address admin) external;
 
