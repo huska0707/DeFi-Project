@@ -19,6 +19,10 @@ contract Test {
             address(aaveLending)
         );
     }
+    
+    function echidna_test_owner() public view returns (bool) {
+        return stakingContract.owner() == address(this);
+    }
 
     function echidna_cant_add_allowed_token() public view returns (bool) {
         return !stakingContract.tokenIsAllowed(address(randomToken));
