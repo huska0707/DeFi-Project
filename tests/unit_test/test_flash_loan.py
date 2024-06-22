@@ -17,7 +17,7 @@ def test_constructor():
 
 # flashFee
 def test_flash_fee():
-    fee = 500
+    fee = 1000
     flash_lender = deploy_flash_lender(fee=fee)
     weth_token = get_contract("weth_token")
     fau_token = get_contract("fau_token")
@@ -25,7 +25,7 @@ def test_flash_fee():
 
     assert flash_fee == CENT * fee / 10000
     with pytest.raises(exceptions.VirtualMachineError):
-        flash_lender.flashFee(fau_token)
+        flash_lender.flashFee(fau_token, CENT)
 
 
 # maxFlashLoan
@@ -192,4 +192,4 @@ def test_flash_borrow_revert_repay_failed():
     amt = flash_lender.maxFlashLoan(weth_token)
 
     with pytest.raises(exceptions.VirtualMachineError):
-        make_flash_loan(flash_borrower, weth_token, account)
+        make_flash_loan(flash_borrower, weth_token, amt, account)
