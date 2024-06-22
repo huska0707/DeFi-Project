@@ -11,6 +11,7 @@ import pytest
 from scripts.deploy_aave_lending_contract import (
     deploy_aave_lending_contract,
     withdraw_aave,
+    deposit_aave,
 )
 
 
@@ -29,6 +30,7 @@ def test_aave_lending_contract(amt=POINT_ONE):
 
     # Deposit
     approve_erc20(weth_token, aave_lending_contract, amt, account)
+    deposit_aave(aave_lending_contract, weth_token, amt, account)
     assert weth_token.balanceOf(account.address) == initial_balance_user - amt
     assert aweth_token.balanceOf(aave_lending_contract) > amt
 
